@@ -39,10 +39,14 @@ public class AuthController {
     // Login endpoint
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
-        return employeeService.authenticate(request.getUsername(), request.getPassword())
-                .map(emp -> new AuthResponse(jwtUtil.generateToken(emp.getUsername()), null))
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(401)
-                        .body(new AuthResponse(null, "Invalid username or password")));
+
+        // Authenticate the user; RuntimeException will be thrown if login fails
+        Employee emp = employeeService.authenticate(request.getUsername(), request.getPassword());
+
+        // Generate JWT token after successful login
+        String token = jwtUtil.generateToken(emp.getUsername());
+
+        // Return token in response
+        return ResponseEntity.ok(new AuthResponse(token, null));
     }
 }

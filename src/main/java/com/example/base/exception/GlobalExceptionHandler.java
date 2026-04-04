@@ -34,4 +34,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<AuthResponse> handleAllExceptions(Exception ex) {
         return new ResponseEntity<>(new AuthResponse(null, "Server error: " + ex.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<AuthResponse> handleRuntimeException(RuntimeException ex) {
+
+        // If the message is login failure, return 401 Unauthorized
+        HttpStatus status = ex.getMessage().equals("Invalid username or password")
+                ? HttpStatus.UNAUTHORIZED
+                : HttpStatus.CONFLICT;
+
+        return new ResponseEntity<>(new AuthResponse(null, ex.getMessage()), status);
+    }
+
 }

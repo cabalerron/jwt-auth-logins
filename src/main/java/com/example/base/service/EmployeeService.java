@@ -1,7 +1,5 @@
 package com.example.base.service;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,15 +17,28 @@ public class EmployeeService {
     private PasswordEncoder passwordEncoder;
 
     public Employee register(Employee employee) {
-        employee.setPassword(passwordEncoder.encode(employee.getPassword())); // hash password
+        if (repository.findByUsername(employee.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        employee.setPassword(passwordEncoder.encode(employee.getPassword()));
         return repository.save(employee);
     }
 
-    public Optional<Employee> authenticate(String username, String rawPassword) {
-        Optional<Employee> employee = repository.findByUsername(username);
-        if (employee.isPresent() && passwordEncoder.matches(rawPassword, employee.get().getPassword())) {
-            return employee;
+    public Employee authenticate(String username, String rawPassword) {
+
+        // Try to find the employee by username
+        Employee employee = repository.findByUsername(username)
+                // If not found, throw RuntimeException to trigger your handler
+                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+
+        // Check if password matches
+        if (!passwordEncoder.matches(rawPassword, employee.getPassword())) {
+            // If password is incorrect, throw RuntimeException
+            throw new RuntimeException("Invalid username or password");
         }
-        return Optional.empty();
+
+        // Login successful
+        return employee;
     }
 }
